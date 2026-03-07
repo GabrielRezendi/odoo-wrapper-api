@@ -42,6 +42,21 @@ npm run start:prod
 
 O banco auxiliar (PostgreSQL) é usado para armazenar sessões/tokens; as operações de negócio (Chamados, Base de Conhecimento) são realizadas no Odoo via JSON-RPC.
 
+## Docker
+
+```bash
+# Build e push para Docker Hub (usa versão do package.json)
+npm run docker:push
+
+# Build e push com versão específica
+npm run docker:push -- 1.0.0
+
+# Imagem customizada (DOCKER_IMAGE=gabrielrezendi/odoo-wrapper-api)
+DOCKER_IMAGE=meu-usuario/minha-imagem npm run docker:push -- 2.0.0
+```
+
+Requer `docker login` antes do push.
+
 ## Swagger
 
 A documentação interativa da API está disponível em:
