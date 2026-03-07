@@ -86,3 +86,13 @@ Evitar: `"priority": 3`, `"priority": "3"`, `"priority": 1` (integer).
 **Causa:** O servidor PostgreSQL exige conexões SSL (pg_hba.conf com `hostssl` ou similar), mas a aplicação está conectando sem SSL.
 
 **Solução:** Definir `DATABASE_SSL=true` no `.env`. A config aplica SSL na conexão e, quando usa `DATABASE_URL`, adiciona `sslmode=require` à URL se ainda não estiver presente.
+
+---
+
+## PostgreSQL: self-signed certificate in certificate chain
+
+**Sintomas:** `Error: self-signed certificate in certificate chain` ao conectar com SSL.
+
+**Causa:** O servidor PostgreSQL usa certificado autoassinado; o Node.js rejeita por padrão. Além disso, o parâmetro `sslmode` na `DATABASE_URL` (ex.: `verify-full` injetado pelo provedor) **sobrescreve** o objeto `ssl` passado ao pg.Pool.
+
+**Solução:** Definir `DATABASE_SSL_REJECT_UNAUTHORIZED=false` no `.env`. A config remove qualquer `sslmode` existente na URL e adiciona `sslmode=no-verify`, garantindo que a verificação seja desativada. Use apenas em ambientes confiáveis (ex.: VPS própria).

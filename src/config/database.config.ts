@@ -17,9 +17,12 @@ export default registerAs('database', () => {
 
   if (process.env.DATABASE_URL) {
     let url = process.env.DATABASE_URL;
-    if (useSsl && !url.includes('sslmode=')) {
-      url += url.includes('?') ? '&' : '?';
-      url += 'sslmode=require';
+    // sslmode na URL sobrescreve o objeto ssl no pg.Pool - precisamos controlar via URL
+    if (useSsl) {
+      url = url.replace(/\?sslmode=[^&]+&?/i, '?').replace(/&sslmode=[^&]+/gi, '');
+      if (url.endsWith('?')) url = url.slice(0, -1);
+      const sep = url.includes('?') ? '&' : '?';
+      url += `${sep}sslmode=${rejectUnauthorized ? 'require' : 'no-verify'}`;
     }
     return {
       type: 'postgres' as const,
