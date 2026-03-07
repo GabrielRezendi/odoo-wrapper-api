@@ -55,7 +55,7 @@ npm run docker:push -- 1.0.0
 DOCKER_IMAGE=meu-usuario/minha-imagem npm run docker:push -- 2.0.0
 ```
 
-Requer `docker login` antes do push.
+Requer `docker login` antes do push. O build usa `linux/amd64` por padrão (compatível com a maioria dos servidores). Para Mac ARM: `DOCKER_PLATFORM=linux/arm64 npm run docker:push`.
 
 ## Swagger
 

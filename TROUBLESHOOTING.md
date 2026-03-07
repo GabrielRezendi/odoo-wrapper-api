@@ -59,6 +59,16 @@ Evitar: `"priority": 3`, `"priority": "3"`, `"priority": 1` (integer).
 
 ---
 
+## Docker: exec format error ao rodar container
+
+**Sintomas:** `exec format error` ou `failed to load docker-entrypoint.sh` ao iniciar o container em servidor/VPS.
+
+**Causa:** Imagem construída em arquitetura diferente da do host (ex.: ARM64 no Mac M1 vs AMD64 no servidor).
+
+**Solução:** O script `npm run docker:push` usa `--platform linux/amd64` por padrão. Reconstrua e faça push novamente.
+
+---
+
 ## GET /knowledge/articles: Domain() invalid item in domain: []
 
 **Sintomas:** `ValueError: Domain() invalid item in domain: []` ao listar artigos.
@@ -66,3 +76,13 @@ Evitar: `"priority": 3`, `"priority": "3"`, `"priority": 1` (integer).
 **Causa:** O `search_read` recebia `[[domain]]`; quando `domain = []`, isso virava `[[[]]]` e o Odoo interpretava o domínio como `[[]]` (lista com item inválido `[]`).
 
 **Solução:** Passar `[domain]` em vez de `[[domain]]` para `search_read`. O primeiro argumento deve ser o domínio em si (`[]` para sem filtro), não uma lista aninhada.
+
+---
+
+## PostgreSQL: no pg_hba.conf entry for host, no encryption
+
+**Sintomas:** `no pg_hba.conf entry for host "X.X.X.X", user "odoo_wrapper_api", database "odoo_wrapper_api", no encryption`
+
+**Causa:** O servidor PostgreSQL exige conexões SSL (pg_hba.conf com `hostssl` ou similar), mas a aplicação está conectando sem SSL.
+
+**Solução:** Definir `DATABASE_SSL=true` no `.env`. A config aplica SSL na conexão e, quando usa `DATABASE_URL`, adiciona `sslmode=require` à URL se ainda não estiver presente.

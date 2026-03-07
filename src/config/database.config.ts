@@ -1,21 +1,30 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('database', () => {
-  const useSsl = process.env.DATABASE_SSL === 'true';
-  const sslConfig = useSsl
-    ? {
-        rejectUnauthorized:
-          process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false',
-      }
-    : false;
+  const useSsl =
+    process.env.DATABASE_SSL === 'true' ||
+    process.env.DATABASE_SSL === '1' ||
+    process.env.DATABASE_SSL?.toLowerCase() === 'require';
+  const rejectUnauthorized =
+    process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false';
+  const sslConfig = useSsl ? { rejectUnauthorized } : false;
+
+  const baseConfig = {
+    ssl: sslConfig,
+    autoLoadEntities: true,
+    synchronize: process.env.NODE_ENV !== 'production',
+  };
 
   if (process.env.DATABASE_URL) {
+    let url = process.env.DATABASE_URL;
+    if (useSsl && !url.includes('sslmode=')) {
+      url += url.includes('?') ? '&' : '?';
+      url += 'sslmode=require';
+    }
     return {
       type: 'postgres' as const,
-      url: process.env.DATABASE_URL,
-      ssl: sslConfig,
-      autoLoadEntities: true,
-      synchronize: process.env.NODE_ENV !== 'production',
+      url,
+      ...baseConfig,
     };
   }
 
@@ -26,8 +35,6 @@ export default registerAs('database', () => {
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_DATABASE || 'odoo_wrapper',
-    ssl: sslConfig,
-    autoLoadEntities: true,
-    synchronize: process.env.NODE_ENV !== 'production',
+    ...baseConfig,
   };
 });
