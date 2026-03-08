@@ -91,9 +91,11 @@ export class OdooJsonRpcService {
       if (data.error.code === 403) {
         throw new HttpException({ message: msg }, HttpStatus.FORBIDDEN);
       }
+      const isOdooServerError =
+        /odoo\s+server\s+error/i.test(msg) || data.error.code === -32603;
       throw new HttpException(
         { message: msg, data: data.error.data },
-        HttpStatus.BAD_GATEWAY,
+        isOdooServerError ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.BAD_GATEWAY,
       );
     }
 

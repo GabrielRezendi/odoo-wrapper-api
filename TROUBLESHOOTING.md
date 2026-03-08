@@ -110,3 +110,19 @@ Evitar: `"priority": 3`, `"priority": "3"`, `"priority": 1` (integer).
 2. Extrai IDs de `message_ids` em vários formatos (`[1,2,3]`, `[[1,"x"],[2,"y"]]`, etc.)
 3. Usa fallback `search_read` em `mail.message` por `res_id` e `res_model` quando `message_ids` está vazio ou o `read` falha
 4. Registra erros em log em vez de engolir silenciosamente
+
+---
+
+## Odoo Server Error: retorno 500
+
+**Comportamento:** Quando o Odoo retorna erro com mensagem "Odoo Server Error" (ou código JSON-RPC -32603), a API responde com **HTTP 500** em vez de 502 (Bad Gateway). Erros de gateway/proxy continuam retornando 502.
+
+---
+
+## Knowledge: AccessError em audit_report_id
+
+**Sintomas:** `AccessError: Failed to read field knowledge.article.audit_report_id` ao listar ou ler artigos da base de conhecimento.
+
+**Causa:** O campo `audit_report_id` (e outros customizados) exigem permissões específicas (ex.: Accounting/Bookkeeper). Sem especificar `fields`, o Odoo retorna todos os campos.
+
+**Solução:** A API passa a usar apenas campos essenciais por padrão: `id`, `name`, `body`, `parent_id`, `root_article_id`, `sequence`, `active`, `create_date`, `write_date`. Para campos customizados, use o parâmetro `fields` na query.

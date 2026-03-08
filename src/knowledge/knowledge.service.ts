@@ -6,6 +6,18 @@ import {
 
 const MODEL = 'knowledge.article';
 
+const DEFAULT_FIELDS = [
+  'id',
+  'name',
+  'body',
+  'parent_id',
+  'root_article_id',
+  'sequence',
+  'active',
+  'create_date',
+  'write_date',
+];
+
 export interface SearchArticlesParams {
   domain?: unknown[];
   fields?: string[];
@@ -21,7 +33,7 @@ export class KnowledgeService {
   async search(creds: OdooCredentials, params: SearchArticlesParams = {}) {
     const domain = params.domain ?? [];
     const kwargs: Record<string, unknown> = {};
-    if (params.fields?.length) kwargs.fields = params.fields;
+    kwargs.fields = params.fields?.length ? params.fields : DEFAULT_FIELDS;
     if (params.limit != null) kwargs.limit = params.limit;
     if (params.offset != null) kwargs.offset = params.offset;
     if (params.odoo) Object.assign(kwargs, params.odoo);
@@ -44,7 +56,9 @@ export class KnowledgeService {
     fields?: string[],
     odoo?: Record<string, unknown>,
   ) {
-    const kwargs: Record<string, unknown> = fields?.length ? { fields } : {};
+    const kwargs: Record<string, unknown> = {
+      fields: fields?.length ? fields : DEFAULT_FIELDS,
+    };
     if (odoo) Object.assign(kwargs, odoo);
     try {
       const result = (await this.odooRpc.executeKw(
