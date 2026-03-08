@@ -96,3 +96,17 @@ Evitar: `"priority": 3`, `"priority": "3"`, `"priority": 1` (integer).
 **Causa:** O servidor PostgreSQL usa certificado autoassinado; o Node.js rejeita por padrão. Além disso, o parâmetro `sslmode` na `DATABASE_URL` (ex.: `verify-full` injetado pelo provedor) **sobrescreve** o objeto `ssl` passado ao pg.Pool.
 
 **Solução:** Definir `DATABASE_SSL_REJECT_UNAUTHORIZED=false` no `.env`. A config remove qualquer `sslmode` existente na URL e adiciona `sslmode=no-verify`, garantindo que a verificação seja desativada. Use apenas em ambientes confiáveis (ex.: VPS própria).
+
+---
+
+## GET /tickets/:id: messages vazio mesmo com respostas
+
+**Sintomas:** Ao consultar um ticket com respostas, o array `messages` retorna vazio.
+
+**Causa:** `message_ids` pode não vir no read do ticket em algumas versões; ou o `read` de `mail.message` falha (ex.: permissão) e o erro era engolido.
+
+**Solução:** O `TicketsService.read` agora:
+1. Garante `message_ids` nos fields quando o usuário passa campos customizados
+2. Extrai IDs de `message_ids` em vários formatos (`[1,2,3]`, `[[1,"x"],[2,"y"]]`, etc.)
+3. Usa fallback `search_read` em `mail.message` por `res_id` e `res_model` quando `message_ids` está vazio ou o `read` falha
+4. Registra erros em log em vez de engolir silenciosamente

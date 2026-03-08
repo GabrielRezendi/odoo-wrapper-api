@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   OdooJsonRpcService,
   OdooCredentials,
@@ -29,6 +29,8 @@ export interface SearchTicketsParams {
 
 @Injectable()
 export class TicketsService {
+  private readonly logger = new Logger(TicketsService.name);
+
   constructor(private readonly odooRpc: OdooJsonRpcService) {}
 
   async search(creds: OdooCredentials, params: SearchTicketsParams = {}) {
@@ -67,7 +69,13 @@ export class TicketsService {
     fields?: string[],
     odoo?: Record<string, unknown>,
   ) {
-    const kwargs: Record<string, unknown> = fields?.length ? { fields } : {};
+    const kwargs: Record<string, unknown> = {};
+    if (fields?.length) {
+      const baseFields = fields.includes('message_ids')
+        ? fields
+        : [...fields, 'message_ids'];
+      kwargs.fields = baseFields;
+    }
     if (odoo) Object.assign(kwargs, odoo);
     try {
       const result = (await this.odooRpc.executeKw(
@@ -81,31 +89,71 @@ export class TicketsService {
         throw new NotFoundException(`Ticket ${id} not found`);
       }
       const ticket = result[0] as Record<string, unknown>;
-      const rawMessageIds = ticket?.message_ids;
-      const messageIds = Array.isArray(rawMessageIds)
-        ? rawMessageIds.map((item: unknown) =>
-            Array.isArray(item) ? (item[0] as number) : (item as number),
-          )
-        : [];
+      let messageIds = this.extractMessageIds(ticket?.message_ids);
+
       if (messageIds.length > 0) {
         try {
           const messages = (await this.odooRpc.executeKw(
             creds,
             MESSAGE_MODEL,
             'read',
-            [[messageIds]],
+            [messageIds],
             { fields: MESSAGE_FIELDS },
           )) as unknown[];
           ticket.messages = Array.isArray(messages) ? messages : [];
-        } catch {
-          ticket.messages = [];
+        } catch (e) {
+          this.logger.warn(
+            `mail.message read failed for ticket ${id}: ${e instanceof Error ? e.message : String(e)}`,
+          );
+          const fallback = await this.fetchMessagesByResId(creds, id);
+          ticket.messages = fallback;
         }
       } else {
-        ticket.messages = [];
+        this.logger.debug(
+          `Ticket ${id}: message_ids empty or missing, trying fallback by res_id`,
+        );
+        const fallback = await this.fetchMessagesByResId(creds, id);
+        ticket.messages = fallback;
       }
       return ticket;
     } catch (e) {
       this.mapOdooError(e);
+    }
+  }
+
+  private extractMessageIds(raw: unknown): number[] {
+    if (raw == null || raw === false) return [];
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((item: unknown) => {
+        if (typeof item === 'number') return item;
+        if (Array.isArray(item) && item.length > 0) {
+          const id = item[0];
+          return typeof id === 'number' ? id : 0;
+        }
+        return 0;
+      })
+      .filter((id): id is number => id > 0);
+  }
+
+  private async fetchMessagesByResId(
+    creds: OdooCredentials,
+    ticketId: number,
+  ): Promise<unknown[]> {
+    try {
+      const messages = (await this.odooRpc.executeKw(
+        creds,
+        MESSAGE_MODEL,
+        'search_read',
+        [[['res_id', '=', ticketId], ['res_model', '=', MODEL]]],
+        { fields: MESSAGE_FIELDS, order: 'date asc' },
+      )) as unknown[];
+      return Array.isArray(messages) ? messages : [];
+    } catch (e) {
+      this.logger.warn(
+        `mail.message search_read fallback failed for ticket ${ticketId}: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      return [];
     }
   }
 
