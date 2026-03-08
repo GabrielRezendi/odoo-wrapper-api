@@ -49,7 +49,12 @@ export class TicketsController {
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'offset', required: false })
   @ApiQuery({ name: 'fields', required: false })
-  @ApiQuery({ name: 'state', required: false })
+  @ApiQuery({
+    name: 'stage',
+    required: false,
+    description:
+      'Stage ID or name (e.g. "Solved"). Prefix with ! to exclude (e.g. "!4" = all except stage 4)',
+  })
   @ApiQuery({
     name: 'odoo',
     required: false,
@@ -69,9 +74,17 @@ export class TicketsController {
       throw new BadRequestException('teamId must be a valid number');
     }
     const domain: unknown[] = [['team_id', '=', teamIdNum]];
-    if (query.state) {
-      const stateNum = parseInt(query.state, 10);
-      if (!Number.isNaN(stateNum)) domain.push(['stage_id', '=', stateNum]);
+    if (query.stage?.trim()) {
+      const raw = query.stage.trim();
+      const exclude = raw.startsWith('!');
+      const stageVal = exclude ? raw.slice(1).trim() : raw;
+      const op = exclude ? '!=' : '=';
+      const stageNum = parseInt(stageVal, 10);
+      if (!Number.isNaN(stageNum)) {
+        domain.push(['stage_id', op, stageNum]);
+      } else if (stageVal) {
+        domain.push(['stage_id.name', op, stageVal]);
+      }
     }
     const limit = parseLimit(query.limit);
     const offset = parseOffset(query.offset);

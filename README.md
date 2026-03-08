@@ -78,7 +78,7 @@ A documentação interativa da API está disponível em:
 
 ### Chamados (Helpdesk – modelo `helpdesk.ticket`)
 
-- **GET /tickets** – Lista chamados (query: `teamId` obrigatório, `limit`, `offset`, `fields`, `state`, `odoo`)
+- **GET /tickets** – Lista chamados (query: `teamId` obrigatório, `limit`, `offset`, `fields`, `stage`, `odoo`). Use `stage=!4` para excluir estágio 4.
 - **GET /tickets/teams** – Lista equipes (query: `limit`, `offset`, `fields`, `odoo`)
 - **GET /tickets/:id** – Obtém um chamado (query: `odoo`; inclui mensagens/respostas)
 - **POST /tickets** – Cria chamado (body: `teamId` obrigatório, `name`, `description`, `odoo`)
