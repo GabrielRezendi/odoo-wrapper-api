@@ -71,7 +71,7 @@ A documentação interativa da API está disponível em:
 
 - **POST /auth/login**  
   Body: `{ "username", "password" }` (ou `apiKey` no lugar de `password`). A URL e o banco do Odoo vêm de `ODOO_DEFAULT_URL` e `ODOO_DEFAULT_DB`.  
-  Retorna: `{ "access_token", "expires_in" }`. Use o `access_token` no header `Authorization: Bearer <token>` nas demais rotas.
+  Retorna: `{ "access_token", "expires_in", "user" }`. O objeto `user` contém: `name`, `email`, `role` (cargo do usuário, de hr.employee job_id/job_title), `department`, `isActive`. Use o `access_token` no header `Authorization: Bearer <token>` nas demais rotas.
 
 - **POST /auth/logout**  
   Requer `Authorization: Bearer <token>`. Invalida a sessão.
@@ -102,7 +102,7 @@ curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"senha"}'
 
-# Resposta: {"access_token":"abc123...","expires_in":86400}
+# Resposta: {"access_token":"abc123...","expires_in":86400,"user":{"name":"...","email":"...","role":"Desenvolvedor","department":"TI","isActive":true}}
 
 # Listar chamados (teamId obrigatório)
 curl -H "Authorization: Bearer abc123..." "http://localhost:3000/tickets?teamId=1"

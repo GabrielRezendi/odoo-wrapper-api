@@ -88,7 +88,7 @@ Evitar: `"priority": 3`, `"priority": "3"`, `"priority": 1` (integer).
 **Solução:** Definir `DATABASE_SSL=true` no `.env`. A config aplica SSL na conexão e, quando usa `DATABASE_URL`, adiciona `sslmode=require` à URL se ainda não estiver presente.
 
 ---
-
+ 
 ## PostgreSQL: self-signed certificate in certificate chain
 
 **Sintomas:** `Error: self-signed certificate in certificate chain` ao conectar com SSL.

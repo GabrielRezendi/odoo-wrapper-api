@@ -5,6 +5,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { LoginResponseDto } from './dto/login-response.dto';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -21,7 +22,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Login with Odoo credentials' })
   @ApiResponse({
     status: 201,
-    description: 'Returns access_token and expires_in',
+    description: 'Returns access_token, expires_in and user data',
+    type: LoginResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Invalid Odoo credentials' })
   async login(@Body() dto: LoginDto) {
